@@ -39,8 +39,25 @@ import http from "node:http";
 //
 const users = [];
 
-const server = http.createServer((request, response) => {
+const server = http.createServer(async (request, response) => {
   const { method, url } = request;
+
+  const buffers = [];
+
+  for await (const chunk of request) {
+    buffers.push(chunk);
+  }
+
+  try {
+    // Converte para JSON
+    request.body = JSON.parse(Buffer.concat(buffers).toString());
+
+    // Deste modo está vindo como texto, vamos converter para JSON
+    // Aí sim podemos acessar o objeto já convertido
+    // console.log(body.name);
+  } catch {
+    request.body = null;
+  }
 
   console.log(method, url); // GET /
 
@@ -52,10 +69,11 @@ const server = http.createServer((request, response) => {
   }
 
   if (method === "POST" && url === "/users") {
+    const { name, email } = request.body;
     users.push({
       id: 1,
-      name: "John Doe",
-      email: "johndoe@example.com",
+      name,
+      email,
     });
 
     return response.writeHead(201).end("Criação um usuário");

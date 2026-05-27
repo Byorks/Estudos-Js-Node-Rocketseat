@@ -1,0 +1,34 @@
+import { Readable } from "node:stream";
+
+class OneToHundredStream extends Readable {
+  index = 1;
+
+  // toda Stream tem um método obrigatório que é o:
+  _read() {
+    // uma stream de leitura tem como propósito enviar dados/ fornecer informações
+    const i = this.index++;
+
+    setTimeout(() => {
+      if (i > 5) {
+        // quando entrar aqui estamos dizendo acabou, não tenho mais infos para serem enviadas a partir dessa stream
+        this.push(null);
+      } else {
+        const buf = Buffer.from(String(i));
+
+        this.push(buf);
+      }
+    }, 1000);
+  }
+}
+
+fetch("http://localhost:3334", {
+  method: "POST",
+  body: new OneToHundredStream(),
+  duplex: "half",
+})
+  .then((response) => {
+    return response.text();
+  })
+  .then((data) => {
+    console.log(data);
+  });

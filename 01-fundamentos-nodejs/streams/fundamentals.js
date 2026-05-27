@@ -21,7 +21,7 @@
 // .pipe(process.stdout)
 
 // Como construir streams do total zero
-import { Readable } from "node:stream";
+import { Readable, Writable, Transform } from "node:stream";
 
 class OneToHundredStream extends Readable {
   index = 1;
@@ -43,8 +43,30 @@ class OneToHundredStream extends Readable {
     }, 1000);
   }
 }
+
 // Conseguimos ver como mesmo sem terminar o processo de verificação do for, ele vai apresentando no stdout os números, isso é ótimo porque
 // é possível processar a medida que vai sendo executado aos poucos.
 // Normalmente não faremos algo tão na mão como aqui, mas nosso response vem com os métodos como pipe aqui utilizado
 
-new OneToHundredStream().pipe(process.stdout);
+class MultiplyByTenStream extends Writable {
+  _write(chunk, enconding, callback) {
+    console.log(chunk.toString() * 10); // nesse caso vai ser o buffer
+    callback();
+  }
+}
+
+// Precisa ler dados de algum lugar e escrever dados para outro lugar
+// utilizada para intermediar a comunicação entre duas
+class InverseNumberStream extends Transform {
+  _transform(chunk, encoding, callback) {
+    const transformed = Number(chunk.toString()) * -1;
+
+    callback(null, Buffer.from(String(transformed)));
+  }
+}
+
+// Duplex é uma união da readable e writable
+// 3 Tipos de streams principais do Node
+new OneToHundredStream()
+  .pipe(new InverseNumberStream())
+  .pipe(new MultiplyByTenStream());
