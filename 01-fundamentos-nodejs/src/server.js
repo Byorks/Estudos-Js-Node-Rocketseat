@@ -1,5 +1,6 @@
 // Normalmente não usa index.js por não ser tão semantico
 import http from "node:http";
+import { json } from "./middlewares/json.js";
 // Importando módulo interno
 // const http = require("http");
 
@@ -42,30 +43,13 @@ const users = [];
 const server = http.createServer(async (request, response) => {
   const { method, url } = request;
 
-  const buffers = [];
-
-  for await (const chunk of request) {
-    buffers.push(chunk);
-  }
-
-  try {
-    // Converte para JSON
-    request.body = JSON.parse(Buffer.concat(buffers).toString());
-
-    // Deste modo está vindo como texto, vamos converter para JSON
-    // Aí sim podemos acessar o objeto já convertido
-    // console.log(body.name);
-  } catch {
-    request.body = null;
-  }
+  await json(request, response);
 
   console.log(method, url); // GET /
 
   if (method === "GET" && url === "/users") {
     // Early return
-    return response
-      .setHeader("Content-type", "application/json")
-      .end(JSON.stringify(users));
+    return response.end(JSON.stringify(users));
   }
 
   if (method === "POST" && url === "/users") {
